@@ -1,0 +1,186 @@
+echo "# Bal-Tashlich-Game" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/ArielaNehemne/Bal-Tashlich-Game.git
+git push -u origin main
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>חסכנים חכמים - משחק בל תשחית</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f8ff;
+        }
+        #gameBoard {
+            width: 500px;
+            height: 500px;
+            margin: 20px auto;
+            background-color: #90ee90;
+            border: 2px solid #008000;
+            position: relative;
+        }
+        .player {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            transition: all 0.5s;
+        }
+        .square {
+            width: 46px;
+            height: 46px;
+            border: 2px solid #008000;
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .green {
+            background-color: #32CD32;
+        }
+        .red {
+            background-color: #FF6347;
+        }
+        button {
+            margin: 10px;
+            padding: 10px;
+            font-size: 16px;
+        }
+        #playerInfo {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>חסכנים חכמים - משחק בל תשחית</h1>
+    <div id="playerInfo"></div>
+    <div id="gameBoard"></div>
+    <div id="question"></div>
+    <button onclick="rollDice()">הטל קובייה</button>
+    <button onclick="answerQuestion()">ענה על שאלה</button>
+    <div id="message"></div>
+
+    <script>
+        const questions = [
+            "ציין 3 דרכים לחסוך במים בבית.",
+            "הסבר מדוע חשוב למחזר?",
+            "הדגם כיצד לארוז כריך לבית הספר ללא שקית חד פעמית.",
+            "מה עדיף - לקנות בקבוק מים חד פעמי או רב פעמי? הסבר.",
+            "איך אפשר לחסוך בחשמל בבית?",
+            "מדוע חשוב להשתמש בתחבורה ציבורית?",
+            "ציין 3 מוצרים שאפשר לקנות יד שנייה במקום חדשים.",
+            "איך אפשר להפחית את כמות הפסולת שאנחנו מייצרים?",
+            "מה היתרונות של גידול ירקות בבית?",
+            "איך אפשר לחסוך בנייר במשרד או בבית הספר?"
+        ];
+
+        const players = [
+            { name: "שחקן 1", color: "red", position: 0 },
+            { name: "שחקן 2", color: "blue", position: 0 }
+        ];
+
+        let currentPlayer = 0;
+
+        function initializeGame() {
+            const gameBoard = document.getElementById('gameBoard');
+            for (let i = 0; i < 50; i++) {
+                const square = document.createElement('div');
+                square.className = 'square';
+                square.textContent = i + 1;
+                square.style.bottom = `${Math.floor(i / 10) * 50}px`;
+                square.style.left = `${(i % 10) * 50}px`;
+                if (i % 7 === 0) square.classList.add('green');
+                if (i % 11 === 0) square.classList.add('red');
+                gameBoard.appendChild(square);
+            }
+
+            players.forEach((player, index) => {
+                const playerElement = document.createElement('div');
+                playerElement.className = 'player';
+                playerElement.id = `player${index}`;
+                playerElement.style.backgroundColor = player.color;
+                gameBoard.appendChild(playerElement);
+            });
+
+            updatePlayerInfo();
+        }
+
+        function updatePlayerInfo() {
+            const playerInfo = document.getElementById('playerInfo');
+            playerInfo.innerHTML = players.map((player, index) => 
+                `<div style="color: ${player.color}">${player.name}: משבצת ${player.position} ${currentPlayer === index ? '(תור)' : ''}</div>`
+            ).join('');
+        }
+
+        function rollDice() {
+            const roll = Math.floor(Math.random() * 6) + 1;
+            players[currentPlayer].position += roll;
+            if (players[currentPlayer].position > 50) players[currentPlayer].position = 50;
+            updatePlayerPosition();
+            checkSpecialSquare();
+            document.getElementById('message').innerHTML = `${players[currentPlayer].name} הטיל ${roll}. התקדם ל-${players[currentPlayer].position}.`;
+            if (players[currentPlayer].position === 50) {
+                document.getElementById('message').innerHTML += ` ${players[currentPlayer].name} ניצח!`;
+            } else {
+                document.getElementById('question').innerHTML = getRandomQuestion();
+            }
+        }
+
+        function answerQuestion() {
+            players[currentPlayer].position += 2;
+            if (players[currentPlayer].position > 50) players[currentPlayer].position = 50;
+            updatePlayerPosition();
+            document.getElementById('message').innerHTML = "תשובה נכונה! התקדמת 2 צעדים נוספים.";
+            if (players[currentPlayer].position === 50) {
+                document.getElementById('message').innerHTML += ` ${players[currentPlayer].name} ניצח!`;
+            } else {
+                nextTurn();
+            }
+        }
+
+        function updatePlayerPosition() {
+            players.forEach((player, index) => {
+                const playerElement = document.getElementById(`player${index}`);
+                playerElement.style.bottom = `${Math.floor(player.position / 10) * 50 + 10}px`;
+                playerElement.style.left = `${(player.position % 10) * 50 + 10}px`;
+            });
+            updatePlayerInfo();
+        }
+
+        function checkSpecialSquare() {
+            const position = players[currentPlayer].position;
+            if (position % 7 === 0) {
+                players[currentPlayer].position += 3;
+                document.getElementById('message').innerHTML += " נחתת על משבצת ירוקה! התקדמת 3 צעדים נוספים.";
+            } else if (position % 11 === 0) {
+                players[currentPlayer].position -= 2;
+                document.getElementById('message').innerHTML += " נחתת על משבצת אדומה! חזרת 2 צעדים אחורה.";
+            }
+            updatePlayerPosition();
+        }
+
+        function nextTurn() {
+            currentPlayer = (currentPlayer + 1) % players.length;
+            updatePlayerInfo();
+            document.getElementById('question').innerHTML = getRandomQuestion();
+        }
+
+        function getRandomQuestion() {
+            return questions[Math.floor(Math.random() * questions.length)];
+        }
+
+        initializeGame();
+    </script>
+</body>
+</html>
